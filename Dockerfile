@@ -47,4 +47,4 @@ RUN mkdir data && mkdir dist
 
 COPY . .
 
-CMD ["pm2-runtime", "process.yml"]
+CMD ["node", "process.yml"]
