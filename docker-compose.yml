@@ -1,12 +1,14 @@
 services:
-  db-mongo:
-    # Version of mongoDB currently in production
+  db:
+    container_name: db-mongo
     image: mongo:4.2.23
     ports:
       - "${MONGODB_PORT:-27017}:27017"
     volumes:
       - db-mongo:/data/db
-  db-postgres:
+  db:
+    container_name: db-postgres
+    image: postgis/postgis:16-3.4-alpine
     build:
       dockerfile: docker-resources/postgres/Dockerfile.dev
     ports:
@@ -21,55 +23,24 @@ services:
       - db-postgres:/var/lib/postgresql/data
   redis:
     # Version of Redis currently in production
-    image: redis:4.0.9
+    image: redis:latest
     ports:
       - "${REDIS_PORT:-6379}:6379"
   api:
     build:
-      dockerfile: docker-resources/api/Dockerfile.dev
+      args:
+        - http_proxy
+        - https_proxy
+        - HTTP_PROXY
+        - HTTPS_PROXY
+    networks:
+      - ban-plateforme
     depends_on:
       - db-mongo
       - db-postgres
       - redis
     environment:
-      - MONGODB_URL=mongodb://db-mongo
-      - MONGODB_DBNAME=${MONGODB_DBNAME}
-      - POSTGRES_URL=db-postgres
-      - POSTGRES_BAN_USER=${POSTGRES_BAN_USER}
-      - POSTGRES_BAN_PASSWORD=${POSTGRES_BAN_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - REDIS_URL=redis://redis
-      - FANTOIR_PATH=${FANTOIR_PATH}
-      - GAZETTEER_DB_PATH=${GAZETTEER_DB_PATH}
-      - CONTOURS_DATA_PATH=${CONTOURS_DATA_PATH}
-      - COMMUNES_LOCAUX_ADRESSES_DATA_PATH=${COMMUNES_LOCAUX_ADRESSES_DATA_PATH}
-      - DEPARTEMENTS=${DEPARTEMENTS}
-      - MAX_CONCURRENT_WORKERS=${MAX_CONCURRENT_WORKERS}
-      - DATAGOUV_API_KEY=${DATAGOUV_API_KEY}
-      - API_DEPOT_URL=${API_DEPOT_URL}
-      - ADMIN_TOKEN=${ADMIN_TOKEN}
-      - BAN_API_AUTHORIZED_TOKENS=${BAN_API_AUTHORIZED_TOKENS}
-      - BAN_API_URL=${BAN_API_URL}
-      - API_IDFIX_URL=${API_IDFIX_URL}
-      - API_IDFIX_TOKEN=${API_IDFIX_TOKEN}
-      - JOB_STATUS_LIMIT_DURATION=${JOB_STATUS_LIMIT_DURATION}
-      - MATOMO_URL=${MATOMO_URL}
-      - MATOMO_SITE_ID=${MATOMO_SITE_ID}
-      - MATOMO_TOKEN_AUTH=${MATOMO_TOKEN_AUTH}
-      - FORCE_DOWNLOAD_CONTOUR=
-      - FORCE_DOWNLOAD_DATASETS=
-    ports:
-      - "${PORT:-5000}:5000"
-    volumes:
-      - data:/app/data
-      - dist:/app/dist
-      - ./lib:/app/lib
-      - ./scripts:/app/scripts
-      - ./server.js:/app/server.js
-      - ./worker.js:/app/worker.js
-      - ./toolbox.dev:/app/toolbox.dev
 volumes:
-  data:
   dist:
   db-mongo:
   db-postgres:
